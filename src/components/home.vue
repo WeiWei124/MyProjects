@@ -10,7 +10,6 @@
 <!-- @on-pulldown-loading="downLoad"  -->
     </div>
      <div class="main">
-
       <!--pulldown slot  -->
       <!-- <div slot="pulldown" class="l-pulldown" v-show="isdownShow">
         <span v-show="scroller.pulldownStatus === 'down'">下拉刷新</span>
@@ -33,7 +32,7 @@
       :pullup-status.sync="scroller.pullupStatus"
       >
          <div class="dl">
-            <router-link to="/homeList"  v-for="item in searchData">
+            <router-link to="/homeList"  v-for="item in home_body">
                 <p class="dt"><img :src="item.img" alt=""></p>
                 <p class="dd">
                   <span class="list list1"><span class="title"><b>{{item.title}}</b><img src="" alt=""></span><strong>{{item.score}}</strong> </span>
@@ -80,7 +79,6 @@ const pulldown={
 export default {
   name: 'home',
   created(){
-    //console.log(names)
   },
   data () {
     return {
@@ -88,6 +86,7 @@ export default {
       isdownShow:false,
       //数据渲染
       home_body:[],
+      home_bodySub:[],
       bannerImg:[],
       scroller: {
         isNull: false,
@@ -107,16 +106,16 @@ export default {
       },
       searchs:''
     }
-   
   },
    created () {
     var that = this;
     this.$http({
       url:"http://localhost:8080/api/data",
       method:"GET"
-    }).then(function(res){
-      that.bannerImg=res.body.data.homePage.bannerImg;
-      that.home_body=res.body.data.homePage.home_body;
+    }).then((res)=>{
+      that.bannerImg = res.body.data.homePage.bannerImg;
+      that.home_body = res.body.data.homePage.home_body;
+      that.home_bodySub = that.home_body
       this.$nextTick(() => {
         this.$refs.fresh.reset()
       })
@@ -137,7 +136,7 @@ export default {
       this.$http({
       url:"http://localhost:8080/api/data",
       method:"GET"
-    }).then(function(res){
+    }).then((res)=>{
         that.bannerImg=res.body.data.homePage.bannerImg;
         that.home_body=that.home_body.concat(res.body.data.homePage.home_body)
           //重新更新数据
@@ -148,30 +147,25 @@ export default {
       })
     }
   },
-  computed:{
-    searchData:function(){
-      let search = this.searchs;
-      let lists = []
-      let array = [
-        {name:1,age:10},
-        {name:2,age:20},
-        {name:3,age:30}
-      ]
-
-      if(search != ''){
-        lists = this.home_body.filter(function(product){
-           return Object.keys(product).some(function(key){
-            console.log(String(product[key].indexOf(search)>-1))
-               return String(product[key].indexOf(search)>-1)
-               
-            })
-        }) 
-        console.log(lists)
-      }
-        
-      return this.home_body
+  watch:{
+    searchs(){
+      let that = this
+      let newBody = []
+      if(this.searchs.trim()){
+         this.home_body.map(function(val){
+            for(let items in val){
+              if(typeof val[items] == "string"){
+                  if(val[items].indexOf(that.searchs)>-1){
+                      newBody.push(val)
+                  }
+              }  
+            }
+         }) 
+         that.home_body = newBody
+      }else{
+        that.home_body = that.home_bodySub
+      }  
     }
-   
   }
 
 }
